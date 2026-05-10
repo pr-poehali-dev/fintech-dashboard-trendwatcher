@@ -1,7 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Icon from "@/components/ui/icon";
-
-const CATEGORIES = ["Все", "Партнёрство", "Регулирование", "Новый продукт", "Рынок"];
 
 type NewsItem = {
   id: number;
@@ -11,9 +9,9 @@ type NewsItem = {
   tag: "regulation" | "partnership" | "product" | "market";
   summary: string;
   source: string;
-  sourceUrl: string;
   whyNow: string;
   date: string;
+  readTime: string;
 };
 
 const NEWS: NewsItem[] = [
@@ -24,12 +22,12 @@ const NEWS: NewsItem[] = [
     category: "Регулирование",
     tag: "regulation",
     summary:
-      "Банк России опубликовал проект положения об открытых API, обязывающий крупнейшие банки предоставить доступ к счетам клиентов через единый протокол к Q1 2026. Штрафы за несоответствие — до 0.5% от капитала.",
+      "Банк России опубликовал проект положения об открытых API, обязывающий крупнейшие банки предоставить доступ к счетам клиентов через единый протокол к Q1 2026. Штрафы за несоответствие составят до 0.5% от капитала банка. Это крупнейшее регуляторное изменение в банковском секторе за последние пять лет.",
     source: "cbr.ru",
-    sourceUrl: "#",
     whyNow:
-      "Дедлайн технической готовности наступает через 6 месяцев. Банкам, не начавшим интеграцию, грозят санкции регулятора уже в следующем квартале.",
-    date: "06 мая 2026",
+      "Дедлайн технической готовности через 6 месяцев. Банки, не начавшие интеграцию, рискуют санкциями регулятора уже в следующем квартале.",
+    date: "6 мая 2026",
+    readTime: "3 мин",
   },
   {
     id: 2,
@@ -38,12 +36,12 @@ const NEWS: NewsItem[] = [
     category: "Партнёрство",
     tag: "partnership",
     summary:
-      "Т-Банк и Яндекс объявили о создании совместного платёжного продукта, который объединит Яндекс Пэй и карты Т-Банка в единый кошелёк. Кешбэк до 10% в сервисах Яндекса. Запуск — июнь 2026.",
+      "Т-Банк и Яндекс объявили о создании совместного платёжного продукта, который объединит Яндекс Пэй и карты Т-Банка в единый кошелёк с кешбэком до 10% в сервисах Яндекса. Запуск запланирован на июнь 2026 года. Ожидаемая аудитория — более 40 млн пользователей.",
     source: "tbank.ru",
-    sourceUrl: "#",
     whyNow:
       "Сбербанк и VK уже анонсировали аналогичный альянс. Рынок суперприложений консолидируется быстрее прогнозов — окно для партнёрств закрывается.",
-    date: "05 мая 2026",
+    date: "5 мая 2026",
+    readTime: "2 мин",
   },
   {
     id: 3,
@@ -52,322 +50,320 @@ const NEWS: NewsItem[] = [
     category: "Рынок",
     tag: "market",
     summary:
-      "По данным Frank RG, объём рынка Buy Now Pay Later достиг 890 млрд рублей в 2025 году. Основной прирост — в e-commerce и fashion. Просрочка держится на уровне 3.2%.",
+      "По данным Frank RG, объём рынка Buy Now Pay Later достиг 890 млрд рублей в 2025 году. Основной прирост — в e-commerce и fashion-сегменте. Просрочка держится на уровне 3.2%, что ниже прогнозов аналитиков.",
     source: "frankrg.com",
-    sourceUrl: "#",
     whyNow:
       "ЦБ рассматривает ужесточение регулирования BNPL в H2 2026. Игроки без лицензии МФО могут выпасть с рынка.",
-    date: "04 мая 2026",
+    date: "4 мая 2026",
+    readTime: "4 мин",
   },
   {
     id: 4,
-    title: "Сбер выпускает встроенный AI-андеррайтинг для МСБ-кредитов",
+    title: "Сбер запускает AI-андеррайтинг для МСБ-кредитов за 4 минуты",
     importance: 2,
-    category: "Новый продукт",
+    category: "Продукт",
     tag: "product",
     summary:
-      "СберБизнес запустил продукт автоматического кредитного анализа на базе собственной LLM. Решение по кредиту до 5 млн ₽ выдаётся за 4 минуты без участия аналитика.",
+      "СберБизнес запустил продукт автоматического кредитного анализа на базе собственной LLM. Решение по кредиту до 5 млн ₽ выдаётся за 4 минуты без участия аналитика. Сбер планирует масштабировать технологию на кредиты до 50 млн ₽.",
     source: "sberbank.ru",
-    sourceUrl: "#",
     whyNow:
-      "Конкуренты начнут копирование в течение 6–9 месяцев. Необходимо оценить собственную технологическую позицию уже сейчас.",
-    date: "03 мая 2026",
+      "Конкуренты начнут копирование через 6–9 месяцев. Необходимо оценить собственную технологическую позицию уже сейчас.",
+    date: "3 мая 2026",
+    readTime: "3 мин",
   },
 ];
 
-function importanceConfig(v: number) {
-  if (v >= 5)
-    return {
-      glow: "shadow-[0_0_0_1px_rgba(34,197,94,0.22),0_4px_24px_rgba(34,197,94,0.07)]",
-      hoverGlow:
-        "hover:shadow-[0_0_0_1px_rgba(34,197,94,0.45),0_8px_32px_rgba(34,197,94,0.13)]",
-      dot: "bg-[#22c55e] shadow-[0_0_5px_#22c55e]",
-      label: "text-[#22c55e]",
-      starFill: "#22c55e",
-    };
-  if (v >= 3)
-    return {
-      glow: "shadow-[0_0_0_1px_rgba(234,179,8,0.18),0_4px_20px_rgba(234,179,8,0.05)]",
-      hoverGlow:
-        "hover:shadow-[0_0_0_1px_rgba(234,179,8,0.38),0_8px_28px_rgba(234,179,8,0.10)]",
-      dot: "bg-[#eab308]",
-      label: "text-[#eab308]",
-      starFill: "#eab308",
-    };
-  return {
-    glow: "shadow-[0_0_0_1px_rgba(255,255,255,0.06)]",
-    hoverGlow: "hover:shadow-[0_0_0_1px_rgba(255,255,255,0.11),0_6px_20px_rgba(0,0,0,0.28)]",
-    dot: "bg-[#52525b]",
-    label: "text-[#52525b]",
-    starFill: "#52525b",
-  };
-}
-
-const TAG_CONFIG: Record<
-  string,
-  { label: string; color: string; bg: string; border: string; barFrom: string; barTo: string }
-> = {
+const TAG_CONFIG = {
   regulation: {
     label: "Регулирование",
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.09)",
-    border: "rgba(245,158,11,0.22)",
-    barFrom: "#f59e0b",
-    barTo: "#b45309",
+    accent: "#92400e",
+    light: "#fffbeb",
+    borderColor: "#fde68a",
+    dot: "#f59e0b",
+    bar: "#f59e0b",
   },
   partnership: {
     label: "Партнёрство",
-    color: "#3b82f6",
-    bg: "rgba(59,130,246,0.09)",
-    border: "rgba(59,130,246,0.22)",
-    barFrom: "#3b82f6",
-    barTo: "#1d4ed8",
+    accent: "#1e40af",
+    light: "#eff6ff",
+    borderColor: "#bfdbfe",
+    dot: "#3b82f6",
+    bar: "#3b82f6",
   },
   product: {
-    label: "Новый продукт",
-    color: "#a78bfa",
-    bg: "rgba(167,139,250,0.09)",
-    border: "rgba(167,139,250,0.22)",
-    barFrom: "#a78bfa",
-    barTo: "#7c3aed",
+    label: "Продукт",
+    accent: "#5b21b6",
+    light: "#f5f3ff",
+    borderColor: "#ddd6fe",
+    dot: "#7c3aed",
+    bar: "#7c3aed",
   },
   market: {
     label: "Рынок",
-    color: "#22c55e",
-    bg: "rgba(34,197,94,0.09)",
-    border: "rgba(34,197,94,0.22)",
-    barFrom: "#22c55e",
-    barTo: "#15803d",
+    accent: "#14532d",
+    light: "#f0fdf4",
+    borderColor: "#bbf7d0",
+    dot: "#22c55e",
+    bar: "#22c55e",
   },
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Партнёрство: "#3b82f6",
-  Регулирование: "#f59e0b",
-  "Новый продукт": "#a78bfa",
-  Рынок: "#22c55e",
-  Все: "#6b7280",
-};
+function importanceMeta(v: number) {
+  if (v >= 5) return { label: "Критично", color: "#dc2626", bg: "#fef2f2", border: "#fecaca" };
+  if (v === 4) return { label: "Важно", color: "#b45309", bg: "#fffbeb", border: "#fde68a" };
+  if (v === 3) return { label: "Следить", color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd" };
+  return { label: "К сведению", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" };
+}
 
-function StarRating({ value, color }: { value: number; color: string }) {
+const CATEGORIES = ["Все", "Регулирование", "Партнёрство", "Рынок", "Продукт"];
+
+function ProgressDots({ total, current }: { total: number; current: number }) {
   return (
-    <div className="flex items-center gap-[3px] shrink-0">
-      {[1, 2, 3, 4, 5].map((s) => (
-        <svg
-          key={s}
-          width="10"
-          height="10"
-          viewBox="0 0 12 12"
-          fill={s <= value ? color : "none"}
-          stroke={s <= value ? color : "#3f3f46"}
-          strokeWidth="1.2"
-        >
-          <polygon points="6,1 7.5,4.5 11,5 8.5,7.5 9,11 6,9.5 3,11 3.5,7.5 1,5 4.5,4.5" />
-        </svg>
+    <div className="flex items-center gap-1.5">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-full transition-all duration-300"
+          style={{
+            width: i === current ? "20px" : "6px",
+            height: "6px",
+            background: i === current ? "#1a1a1a" : "#d1d5db",
+          }}
+        />
       ))}
     </div>
   );
 }
 
-function NewsCard({ item, index }: { item: NewsItem; index: number }) {
-  const imp = importanceConfig(item.importance);
-  const tag = TAG_CONFIG[item.tag];
-
-  return (
-    <article
-      className={`relative flex bg-[#111111] rounded-xl overflow-hidden transition-all duration-300 cursor-pointer animate-fade-in group ${imp.glow} ${imp.hoverGlow}`}
-      style={{ animationDelay: `${index * 0.07}s`, opacity: 0 }}
-    >
-      {/* Left accent bar */}
-      <div
-        className="w-[3px] shrink-0 transition-opacity duration-300 opacity-60 group-hover:opacity-100"
-        style={{ background: `linear-gradient(180deg, ${tag.barFrom}, ${tag.barTo})` }}
-      />
-
-      <div className="flex flex-col gap-3.5 p-5 flex-1 min-w-0">
-        {/* Top */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="font-mono-custom text-[10px] tracking-widest uppercase px-2.5 py-[3px] rounded-full border"
-                style={{ color: tag.color, background: tag.bg, borderColor: tag.border }}
-              >
-                {tag.label}
-              </span>
-              <span className="font-mono-custom text-[10px] text-zinc-600">{item.date}</span>
-            </div>
-            <h2 className="text-[13px] font-semibold text-zinc-100 leading-snug">{item.title}</h2>
-          </div>
-
-          <div className="flex flex-col items-end gap-1.5 shrink-0 pt-0.5">
-            <StarRating value={item.importance} color={imp.starFill} />
-            <span className={`font-mono-custom text-[10px] font-medium tabular-nums ${imp.label}`}>
-              {item.importance}/5
-            </span>
-          </div>
-        </div>
-
-        {/* Summary */}
-        <p className="text-[12px] text-zinc-500 leading-relaxed">{item.summary}</p>
-
-        {/* Why Now box */}
-        <div
-          className="rounded-lg px-3.5 py-3"
-          style={{
-            background: "rgba(255,255,255,0.025)",
-            border: "1px solid rgba(255,255,255,0.06)",
-          }}
-        >
-          <div
-            className="font-mono-custom text-[9px] tracking-[0.18em] uppercase mb-1.5"
-            style={{ color: imp.starFill }}
-          >
-            Why Now
-          </div>
-          <p className="text-[11px] text-zinc-400 leading-relaxed">{item.whyNow}</p>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-0.5">
-          <div className="flex items-center gap-1.5">
-            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${imp.dot}`} />
-            <span className="font-mono-custom text-[10px] text-zinc-600">{item.source}</span>
-          </div>
-          <a
-            href={item.sourceUrl}
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 font-mono-custom text-[10px] text-zinc-600 hover:text-zinc-200 transition-colors"
-          >
-            Источник <Icon name="ExternalLink" size={9} />
-          </a>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 export default function Index() {
-  const [active, setActive] = useState("Все");
+  const [activeFilter, setActiveFilter] = useState("Все");
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const filtered = active === "Все" ? NEWS : NEWS.filter((n) => n.category === active);
-  const topColor = CATEGORY_COLORS[active] ?? "#22c55e";
+  const filtered = activeFilter === "Все" ? NEWS : NEWS.filter((n) => n.category === activeFilter);
 
-  const now = new Date().toLocaleString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  useEffect(() => {
+    setCurrentIdx(0);
+    if (containerRef.current) containerRef.current.scrollTop = 0;
+  }, [activeFilter]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onScroll = () => {
+      const idx = Math.round(container.scrollTop / container.clientHeight);
+      setCurrentIdx(Math.min(idx, filtered.length - 1));
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [filtered.length]);
+
+  const scrollTo = (idx: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: idx * container.clientHeight, behavior: "smooth" });
+  };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Top color stripe */}
-      <div
-        className="h-[2px] w-full transition-all duration-500"
-        style={{
-          background: `linear-gradient(90deg, transparent 0%, ${topColor}bb 25%, ${topColor} 50%, ${topColor}bb 75%, transparent 100%)`,
-        }}
-      />
-
+    <div className="h-screen flex flex-col bg-[#f5f4f0] overflow-hidden" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Header */}
-      <header className="border-b border-white/[0.05] bg-[#0a0a0a]/90 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-[7px] h-[7px] rounded-full transition-all duration-500"
-              style={{ background: topColor, boxShadow: `0 0 8px ${topColor}88` }}
-            />
-            <span className="font-mono-custom text-[13px] font-semibold tracking-[0.12em] uppercase text-zinc-100">
-              ТрендВотчер
-            </span>
-            <span className="font-mono-custom text-[10px] text-zinc-600 hidden sm:block">
-              / FINTECH DIGEST
+      <header className="shrink-0 bg-white border-b border-[#ece9e4]">
+        <div className="flex items-center justify-between px-5 h-[54px]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-[6px] bg-[#111827] flex items-center justify-center shadow-sm">
+              <span className="text-white text-[10px] font-bold tracking-tight">ТВ</span>
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold text-[#111827] leading-none">ТрендВотчер</div>
+              <div className="text-[10px] text-[#9ca3af] mt-[2px]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                {new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-2.5 py-[5px]">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" style={{ boxShadow: "0 0 4px #22c55e" }} />
+            <span className="text-[9px] font-semibold text-[#15803d] tracking-widest uppercase" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+              LIVE
             </span>
           </div>
-          <div className="flex items-center gap-2 text-zinc-600">
-            <Icon name="RefreshCw" size={11} />
-            <span className="font-mono-custom text-[10px]">{now}</span>
-          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto no-scrollbar">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveFilter(cat)}
+              className="shrink-0 text-[11px] font-medium px-3 py-[6px] rounded-full transition-all duration-200 border"
+              style={
+                activeFilter === cat
+                  ? { background: "#111827", color: "#fff", borderColor: "#111827" }
+                  : { background: "transparent", color: "#6b7280", borderColor: "#e5e7eb" }
+              }
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-9">
-        {/* Hero text */}
-        <div className="mb-8 animate-fade-in">
-          <p className="font-mono-custom text-[10px] text-zinc-600 tracking-[0.2em] uppercase mb-2">
-            Внутренний инструмент · Команда банка
-          </p>
-          <h1 className="text-[22px] font-semibold text-zinc-100 tracking-tight">
-            Финтех дайджест
-          </h1>
-          <p className="text-xs text-zinc-600 mt-1">{NEWS.length} материала · ключевые события рынка</p>
-        </div>
+      {/* Full-height snap scroll */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-scroll no-scrollbar"
+        style={{ scrollSnapType: "y mandatory", overscrollBehavior: "contain" }}
+      >
+        {filtered.map((item, idx) => {
+          const tag = TAG_CONFIG[item.tag];
+          const imp = importanceMeta(item.importance);
 
-        {/* Pill filters */}
-        <div
-          className="flex items-center gap-2 mb-7 flex-wrap animate-fade-in"
-          style={{ animationDelay: "0.05s" }}
-        >
-          {CATEGORIES.map((cat) => {
-            const isActive = active === cat;
-            const c = CATEGORY_COLORS[cat];
-            return (
-              <button
-                key={cat}
-                onClick={() => setActive(cat)}
-                className="font-mono-custom text-[11px] px-3.5 py-[7px] rounded-full border transition-all duration-200"
-                style={
-                  isActive
-                    ? {
-                        color: c,
-                        background: `${c}14`,
-                        borderColor: `${c}44`,
-                        boxShadow: `0 0 14px ${c}1a`,
-                      }
-                    : {
-                        color: "#52525b",
-                        background: "transparent",
-                        borderColor: "rgba(255,255,255,0.07)",
-                      }
-                }
+          return (
+            <div
+              key={item.id}
+              className="flex flex-col"
+              style={{
+                height: "100%",
+                scrollSnapAlign: "start",
+                scrollSnapStop: "always",
+                padding: "12px 16px",
+              }}
+            >
+              <div
+                className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden"
+                style={{
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.07)",
+                  border: "1px solid rgba(0,0,0,0.05)",
+                }}
               >
-                {cat}
-              </button>
-            );
-          })}
-          <span className="font-mono-custom text-[10px] text-zinc-700 ml-auto tabular-nums">
-            {filtered.length} / {NEWS.length}
-          </span>
+                {/* Top accent bar */}
+                <div className="h-[3px] w-full shrink-0" style={{ background: tag.bar }} />
+
+                {/* Category row */}
+                <div
+                  className="px-5 py-3.5 flex items-center justify-between shrink-0"
+                  style={{ background: tag.light, borderBottom: `1px solid ${tag.borderColor}` }}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-[7px] h-[7px] rounded-full" style={{ background: tag.dot }} />
+                    <span
+                      className="text-[10px] font-bold tracking-[0.15em] uppercase"
+                      style={{ color: tag.accent, fontFamily: "'IBM Plex Mono', monospace" }}
+                    >
+                      {tag.label}
+                    </span>
+                  </div>
+                  <span
+                    className="text-[10px] font-semibold px-2.5 py-1 rounded-full border"
+                    style={{ color: imp.color, background: imp.bg, borderColor: imp.border }}
+                  >
+                    {imp.label}
+                  </span>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto px-5 pt-5 pb-3">
+                  {/* Meta */}
+                  <div className="flex items-center gap-2 mb-3.5">
+                    <span className="text-[11px] text-[#9ca3af]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                      {item.date}
+                    </span>
+                    <span className="text-[#d1d5db] text-xs">·</span>
+                    <span className="text-[11px] text-[#9ca3af]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                      {item.readTime} чтения
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h2
+                    className="text-[19px] font-semibold text-[#111827] leading-[1.3] tracking-[-0.02em] mb-4"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    {item.title}
+                  </h2>
+
+                  {/* Divider */}
+                  <div className="h-px bg-[#f3f4f6] mb-4" />
+
+                  {/* Summary */}
+                  <p className="text-[13.5px] text-[#374151] leading-[1.7] mb-5">
+                    {item.summary}
+                  </p>
+
+                  {/* Why Now */}
+                  <div
+                    className="rounded-xl p-4"
+                    style={{ background: tag.light, border: `1px solid ${tag.borderColor}` }}
+                  >
+                    <div
+                      className="text-[9px] font-bold tracking-[0.2em] uppercase mb-2"
+                      style={{ color: tag.accent, fontFamily: "'IBM Plex Mono', monospace" }}
+                    >
+                      Почему сейчас
+                    </div>
+                    <p className="text-[12.5px] leading-[1.6]" style={{ color: tag.accent }}>
+                      {item.whyNow}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div
+                  className="px-5 py-3.5 flex items-center justify-between shrink-0"
+                  style={{ borderTop: "1px solid #f3f4f6" }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="Globe" size={11} />
+                    <span className="text-[11px] text-[#9ca3af]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                      {item.source}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button className="flex items-center gap-1.5 text-[11px] text-[#9ca3af] active:text-[#111827] transition-colors">
+                      <Icon name="Bookmark" size={13} />
+                      <span>Сохранить</span>
+                    </button>
+                    <button className="flex items-center gap-1.5 text-[11px] text-[#9ca3af] active:text-[#111827] transition-colors">
+                      <Icon name="Share2" size={13} />
+                      <span>Поделиться</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom nav */}
+      <div className="shrink-0 bg-white border-t border-[#ece9e4] px-5 py-3 flex items-center justify-between">
+        <ProgressDots total={filtered.length} current={currentIdx} />
+
+        <div className="flex items-center gap-1 bg-[#f3f4f6] rounded-full p-[3px]">
+          <button
+            onClick={() => scrollTo(Math.max(0, currentIdx - 1))}
+            disabled={currentIdx === 0}
+            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 disabled:opacity-30"
+            style={currentIdx > 0 ? { background: "#111827" } : {}}
+          >
+            <Icon name="ChevronUp" size={15} style={{ color: currentIdx > 0 ? "#fff" : "#9ca3af" }} />
+          </button>
+          <button
+            onClick={() => scrollTo(Math.min(filtered.length - 1, currentIdx + 1))}
+            disabled={currentIdx === filtered.length - 1}
+            className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 disabled:opacity-30"
+            style={currentIdx < filtered.length - 1 ? { background: "#111827" } : {}}
+          >
+            <Icon name="ChevronDown" size={15} style={{ color: currentIdx < filtered.length - 1 ? "#fff" : "#9ca3af" }} />
+          </button>
         </div>
 
-        {/* Grid */}
-        {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {filtered.map((item, i) => (
-              <NewsCard key={item.id} item={item} index={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-24 font-mono-custom text-xs text-zinc-700">
-            — нет материалов —
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-white/[0.05] mt-16 py-4">
-        <div className="max-w-5xl mx-auto px-6 flex items-center justify-between">
-          <span className="font-mono-custom text-[10px] text-zinc-700">
-            ТрендВотчер · только для внутреннего использования
-          </span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_4px_#22c55e80]" />
-            <span className="font-mono-custom text-[10px] text-[#22c55e]">LIVE</span>
-          </div>
-        </div>
-      </footer>
+        <span
+          className="text-[11px] text-[#9ca3af] tabular-nums"
+          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        >
+          {currentIdx + 1}&thinsp;/&thinsp;{filtered.length}
+        </span>
+      </div>
     </div>
   );
 }
